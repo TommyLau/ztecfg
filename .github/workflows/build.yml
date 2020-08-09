@@ -17,6 +17,16 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-2019, macos-10.15]
+        include:
+          - os: ubuntu-18.04
+            env:
+              BUILD_PLATFORM: linux
+          - os: windows-2019
+            env:
+              BUILD_PLATFORM: win
+          - os: macos-10.15
+            env:
+              BUILD_PLATFORM: mac
     if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
@@ -60,23 +70,15 @@ jobs:
         run: |
           pyinstaller --onefile ${{ env.PYTHON_FILE }}
 
-      - name: Upload Artifact (Linux)
-        if: matrix.os == 'ubuntu-18.04'
-        uses: actions/upload-artifact@v2
-        with:
-          name: ztecfg_${{ env.BUILD_TAG }}_linux
-          path: dist/*
+      - name: Organize files
+        shell: bash
+        run: |
+          mv dist ztecfg
+          tar zcvf ztecfg_${{ env.BUILD_TAG}}_${{ env.BUILD_PLATFORM }}.tgz ztecfg
+          echo "::set-env name=BUILD_FILE::$(ls *.tgz)"
 
-      - name: Upload Artifact (Windows)
-        if: matrix.os == 'windows-2019'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ztecfg_${{ env.BUILD_TAG }}_win
-          path: dist/*
-
-      - name: Upload Artifact (macOS)
-        if: matrix.os == 'macos-10.15'
-        uses: actions/upload-artifact@v2
-        with:
-          name: ztecfg_${{ env.BUILD_TAG }}_mac
-          path: dist/*
+          name: ${{ env.BUILD_FILE }}
+          path: ${{ env.BUILD_FILE }}

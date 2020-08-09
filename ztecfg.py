@@ -17,7 +17,9 @@ import os
 
 VERSION = 'v0.1.0'
 DESCRIPTION = 'A ZTE Optical Modem Configuration Tool'
-DOCUMENTS = '''
+DOCUMENTS = f'''
+ztecfg {VERSION} 
+
 (i) Project page: https://github.com/TommyLau/ztecfg
 (?) Bug report: https://github.com/TommyLau/ztecfg/issues
 
