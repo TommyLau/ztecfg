@@ -14,10 +14,9 @@ jobs:
   build:
     name: Build Execute File
     runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          include:
-            os: [ubuntu-18.04, windows-2019, macos-10.15]
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, windows-2019, macos-10.15]
     if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
