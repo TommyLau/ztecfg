@@ -44,7 +44,7 @@ jobs:
             pip install -r requirements.txt
           }
 
-       - name: Compile
+      - name: Compile
         run: |
           pyinstaller --onefile ${{ env.PYTHON_FILE }}
 
