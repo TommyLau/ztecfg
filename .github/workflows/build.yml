@@ -11,29 +11,8 @@ env:
   PYTHON_FILE: 'ztecfg.py'
 
 jobs:
-  prepare:
-    name: Prepare environments
-    runs-on: ubuntu-latest
-    if: github.event.repository.owner.id == github.event.sender.id
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-
-      - name: Setup environments
-        run: |
-          TAG=`git describe --abbrev=0 --tags`
-          TAG=${TAG:-'0.1.0'}
-          echo "::set-env name=BUILD_TAG::$TAG"
-          echo "::set-env name=BUILD_DATE::$(date +'%Y%m%d')"
-          echo "::set-env name=BUILD_COUNT::$(git rev-list --count HEAD)"
-          echo "::set-env name=BUILD_HASH::$(git rev-parse --short HEAD)"
-          echo "::set-env name=BUILD_VERSION::$(echo $BUILD_TAG+b$BUILD_COUNT.$BUILD_HASH)"
-        continue-on-error: true
-
   build:
     name: Build Execute File
-    needs: prepare
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
