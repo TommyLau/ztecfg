@@ -1,0 +1,117 @@
+name: Release ztecfg
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  PYTHON_VERSION: '3.8'
+  PYTHON_FILE: 'ztecfg.py'
+
+jobs:
+  prepare:
+    name: Prepare for release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Save Release URL
+        run: |
+          echo "${{ steps.create_release.outputs.upload_url }}" > url.txt
+      - name: Upload Release URL
+        uses: actions/upload-artifact@v2
+        with:
+          name: url
+          path: url.txt
+
+  build:
+    needs: prepare
+    name: Build Execute File
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        include:
+          - os: ubuntu-18.04
+            BUILD_PLATFORM: linux
+          - os: windows-2019
+            BUILD_PLATFORM: win
+          - os: macos-10.15
+            BUILD_PLATFORM: mac
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Setup version variables
+        shell: bash
+        run: |
+          BUILD_TAG=`git describe --tags || echo v0.1.0`
+          BUILD_DATE=`date +"%Y%m%d"`
+          BUILD_HASH=`git rev-parse --short HEAD`
+          echo "::set-env name=BUILD_TAG::$BUILD_TAG"
+          echo "::set-env name=BUILD_DATE::$BUILD_DATE"
+          echo "::set-env name=BUILD_HASH::$BUILD_HASH"
+          echo "::set-env name=BUILD_VERSION::$BUILD_TAG+$BUILD_DATE.$BUILD_HASH"
+
+      - name: Update version (Linux / Windows)
+        if: matrix.os != 'macos-10.15'
+        shell: bash
+        run: |
+          sed -i 's/{VERSION}/${{ env.BUILD_VERSION }}/' ${{ env.PYTHON_FILE }}
+
+      - name: Update version (macOS)
+        if: matrix.os == 'macos-10.15'
+        run: |
+          sed -i '' 's/{VERSION}/${{ env.BUILD_VERSION }}/' ${{ env.PYTHON_FILE }}
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install depdendencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          [ -e requirements.txt ] && pip install -r requirements.txt
+
+      - name: Compile
+        run: |
+          pyinstaller --onefile ${{ env.PYTHON_FILE }}
+
+      - name: Download Release URL
+        uses: actions/download-artifact@v2
+        with:
+          name: url
+
+      - name: Organize files
+        shell: bash
+        run: |
+          mv dist ztecfg
+          tar zcvf ztecfg_${{ env.BUILD_TAG}}_${{ matrix.BUILD_PLATFORM }}.tgz ztecfg
+          echo "::set-env name=BUILD_FILE::$(ls *.tgz)"
+          echo "::set-env name=RELEASE_URL::$(cat url.txt)"
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_URL }}
+          asset_path: ${{ env.BUILD_FILE }}
+          asset_name: ${{ env.BUILD_FILE }}
+          asset_content_type: application/tar+gzip
