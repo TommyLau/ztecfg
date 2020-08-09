@@ -29,6 +29,7 @@ jobs:
           echo "::set-env name=BUILD_COUNT::$(git rev-list --count HEAD)"
           echo "::set-env name=BUILD_HASH::$(git rev-parse --short HEAD)"
           echo "::set-env name=BUILD_VERSION::$(echo $BUILD_TAG+b$BUILD_COUNT.$BUILD_HASH)"
+        continue-on-error: true
 
   build:
     name: Build Execute File
