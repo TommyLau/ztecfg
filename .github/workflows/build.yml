@@ -24,7 +24,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup version variables
+        shell: bash
         run: |
+          set -x
           TAG=`git describe --abbrev=0 --tags`
           TAG=${TAG:-'0.1.0'}
           echo "::set-env name=BUILD_TAG::$TAG"
