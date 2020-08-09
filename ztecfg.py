@@ -138,6 +138,84 @@ def unpack(cfg_file, xml_filename):
     return
 
 
+def pack(cfg_file, xml_file, cfg_filename):
+    # Get cfg file content
+    file_content = cfg_file.read()
+    cfg_file.close()
+
+    # Parse cfg file header
+    cfg = cfg_header.parse(file_content)
+    print(f"\nDevice name: {cfg.device_name.decode('utf-8')}\n")
+
+    # Get XML content
+    xml = xml_file.read()
+    xml_file.close()
+
+    # The offset of blocks
+    offset = file_header.sizeof() + device_header.sizeof() + cfg.device_header.name_length
+
+    # Get blocks
+    blocks = file_content[offset:]
+
+    # Parse block header
+    header = block_header.parse(blocks)
+
+    compressed_data = b''
+    file_content = b''
+    offset = block_header.sizeof()
+    length = len(xml)
+    i = 0
+
+    while True:
+        offset1 = i * header.block_size
+        offset2 = (i + 1) * header.block_size
+
+        if offset2 > length:
+            offset2 = length
+            block_size = offset2 - offset1
+        else:
+            block_size = header.block_size
+
+        # Build block
+        content = zlib.compress(xml[offset1:offset2], zlib.Z_BEST_COMPRESSION)
+        compressed_data += content
+        size = block_size
+        compressed_size = len(content)
+        offset = offset + 12 + compressed_size
+
+        if offset2 == length:
+            offset = 0
+
+        # Display process information
+        i += 1
+        print(f'Block {i}: size={size}, compressed={compressed_size}, offset={offset}')
+
+        # Append compressed data
+        file_content += block.build(dict(size=size, compressed_size=compressed_size, offset=offset, content=content))
+
+        # No more data to process
+        if offset == 0:
+            break
+
+    # Build block header
+    header.size = len(xml)
+    header.compressed_size = block_header.sizeof() + len(file_content)
+    header.compressed_crc32 = zlib.crc32(compressed_data)
+    header.header_crc32 = zlib.crc32(block_header.build(header)[:24])
+
+    # Build cfg header
+    cfg.file_header.content_size = device_header.sizeof() + cfg.device_header.name_length + block_header.sizeof() + len(
+        file_content)
+    cfg_content = cfg_header.build(cfg) + block_header.build(header) + file_content
+
+    # Write cfg content to file
+    print(f'\nWrite CFG output to file "{cfg_filename}"\n')
+    with open(cfg_filename, 'wb') as f:
+        f.write(cfg_content)
+
+    return
+
+
 def main():
     parser = ArgumentParser(prog='ztecfg', description=DESCRIPTION, epilog=DOCUMENTS,
                             formatter_class=RawTextHelpFormatter)
@@ -177,7 +255,7 @@ def main():
         return
 
     if args.pack:
-        print('pack')
+        pack(args.pack[0], args.pack[1], filename)
         return
 
 
