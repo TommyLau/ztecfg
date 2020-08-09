@@ -19,14 +19,11 @@ jobs:
         os: [ubuntu-18.04, windows-2019, macos-10.15]
         include:
           - os: ubuntu-18.04
-            env:
-              BUILD_PLATFORM: linux
+            BUILD_PLATFORM: linux
           - os: windows-2019
-            env:
-              BUILD_PLATFORM: win
+            BUILD_PLATFORM: win
           - os: macos-10.15
-            env:
-              BUILD_PLATFORM: mac
+            BUILD_PLATFORM: mac
     if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
@@ -74,7 +71,7 @@ jobs:
         shell: bash
         run: |
           mv dist ztecfg
-          tar zcvf ztecfg_${{ env.BUILD_TAG}}_${{ env.BUILD_PLATFORM }}.tgz ztecfg
+          tar zcvf ztecfg_${{ env.BUILD_TAG}}_${{ matrix.BUILD_PLATFORM }}.tgz ztecfg
           echo "::set-env name=BUILD_FILE::$(ls *.tgz)"
 
       - name: Upload Artifact
