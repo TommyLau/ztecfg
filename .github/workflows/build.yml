@@ -44,15 +44,25 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v2
 
-      - name: Update version (Linux)
+      - name: Setup version variables
+        run: |
+          TAG=`git describe --abbrev=0 --tags`
+          TAG=${TAG:-'0.1.0'}
+          echo "::set-env name=BUILD_TAG::$TAG"
+          echo "::set-env name=BUILD_DATE::$(date +'%Y%m%d')"
+          echo "::set-env name=BUILD_COUNT::$(git rev-list --count HEAD)"
+          echo "::set-env name=BUILD_HASH::$(git rev-parse --short HEAD)"
+          echo "::set-env name=BUILD_VERSION::$(echo $BUILD_TAG+b$BUILD_COUNT.$BUILD_HASH)"
+        continue-on-error: true
+
+      - name: Update version (Linux / Windows)
+        if: matrix.os != 'macos-10.15'
+        shell: bash
         run: |
           sed -i 's/{VERSION}/${{ env.BUILD_VERSION }}/' ${{ env.PYTHON_FILE }}
 
-      - name: Update version (Windows)
-        run: |
-          (Get-Content ${{ env.PYTHON_FILE }}).replace('{VERSION}', '${{ env.BUILD_VERSION }}') | Set-Content ${{ env.PYTHON_FILE }}
-
       - name: Update version (macOS)
+        if: matrix.os == 'macos-10.15'
         run: |
           sed -i '' 's/{VERSION}/${{ env.BUILD_VERSION }}/' ${{ env.PYTHON_FILE }}
 
@@ -61,21 +71,11 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install depdendencies (Linux / macOS)
-        if: matrix.os != 'windows-2019'
+      - name: Install depdendencies
+        shell: bash
         run: |
+          python -m pip install --upgrade pip
           [ -e requirements.txt ] && pip install -r requirements.txt
-
-      - name: Install depdendencies (Windows)
-        if: matrix.os == 'windows-2019'
-        run: |
-          if (Test-Path requirements.txt)
-          {
-            pip install -r requirements.txt
-          }
 
       - name: Compile
         run: |
@@ -85,19 +85,19 @@ jobs:
         if: matrix.os == 'ubuntu-18.04'
         uses: actions/upload-artifact@v2
         with:
-          name: ztecfg_linux
+          name: ztecfg_${{ env.BUILD_TAG }}_linux
           path: dist/*
 
       - name: Upload Artifact (Windows)
         if: matrix.os == 'windows-2019'
         uses: actions/upload-artifact@v2
         with:
-          name: ztecfg_win
+          name: ztecfg_${{ env.BUILD_TAG }}_win
           path: dist/*
 
       - name: Upload Artifact (macOS)
         if: matrix.os == 'macos-10.15'
         uses: actions/upload-artifact@v2
         with:
-          name: ztecfg_mac
+          name: ztecfg_${{ env.BUILD_TAG }}_mac
           path: dist/*
