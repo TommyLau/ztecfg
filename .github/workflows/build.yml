@@ -39,3 +39,62 @@ jobs:
         with:
           name: ztecfg_linux
           path: dist/*
+
+  build_win:
+    name: Build Windows Binary
+    runs-on: windows-2019
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install depdendencies
+        run: |
+          python -m pip install --upgrade pip
+          [ -e requirements.txt ] && pip install -r requirements.txt
+
+      - name: Compile
+        run: |
+          pyinstaller --onefile ${{ env.PYTHON_FILE }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ztecfg_mac
+          path: dist/*
+
+  build_mac:
+    name: Build macOS Binary
+    runs-on: macos-10.15
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install depdendencies
+        run: |
+          python -m pip install --upgrade pip
+          [ -e requirements.txt ] && pip install -r requirements.txt
+
+      - name: Compile
+        run: |
+          pyinstaller --onefile ${{ env.PYTHON_FILE }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ztecfg_mac
+          path: dist/*
+
