@@ -10,10 +10,10 @@ Description: A ZTE Optical Modem Configuration Tool
 
 '''
 
-from argparse import ArgumentParser, FileType, RawTextHelpFormatter
+from argparse import *
 from construct import *
+from zlib import *
 import os
-import zlib
 
 VERSION = 'v0.1.0'
 DESCRIPTION = 'A ZTE Optical Modem Configuration Tool'
@@ -109,7 +109,7 @@ def unpack(cfg_file, xml_filename):
         offset = b.offset
 
         # Append to XML output
-        xml += zlib.decompress(b.content)
+        xml += decompress(b.content)
 
         # Compressed data for crc32 checksum
         compressed_data += b.content
@@ -119,13 +119,13 @@ def unpack(cfg_file, xml_filename):
             break
 
     # Checksum for compressed data
-    crc = zlib.crc32(compressed_data)
+    crc = crc32(compressed_data)
     if header.compressed_crc32 != crc:
         print('Checksum fail for compressed data, please make sure cfg file is valid.')
         return
 
     # Checksum for block header
-    crc = zlib.crc32(block_header.build(header)[:24])
+    crc = crc32(block_header.build(header)[:24])
     if header.header_crc32 != crc:
         print('Checksum fail for block header, please make sure cfg file is valid.')
         return
@@ -177,7 +177,7 @@ def pack(cfg_file, xml_file, cfg_filename):
             block_size = header.block_size
 
         # Build block
-        content = zlib.compress(xml[offset1:offset2], zlib.Z_BEST_COMPRESSION)
+        content = compress(xml[offset1:offset2], Z_BEST_COMPRESSION)
         compressed_data += content
         size = block_size
         compressed_size = len(content)
@@ -200,8 +200,8 @@ def pack(cfg_file, xml_file, cfg_filename):
     # Build block header
     header.size = len(xml)
     header.compressed_size = block_header.sizeof() + len(file_content)
-    header.compressed_crc32 = zlib.crc32(compressed_data)
-    header.header_crc32 = zlib.crc32(block_header.build(header)[:24])
+    header.compressed_crc32 = crc32(compressed_data)
+    header.header_crc32 = crc32(block_header.build(header)[:24])
 
     # Build cfg header
     cfg.file_header.content_size = device_header.sizeof() + cfg.device_header.name_length + block_header.sizeof() + len(
