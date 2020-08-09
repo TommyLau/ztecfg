@@ -27,14 +27,12 @@ jobs:
         shell: bash
         run: |
           set -x
-          TAG=`git describe --abbrev=0 --tags`
-          TAG=${TAG:-'0.1.0'}
+          TAG=`git describe --tags || echo v0.1.0`
           echo "::set-env name=BUILD_TAG::$TAG"
           echo "::set-env name=BUILD_DATE::$(date +'%Y%m%d')"
           echo "::set-env name=BUILD_COUNT::$(git rev-list --count HEAD)"
           echo "::set-env name=BUILD_HASH::$(git rev-parse --short HEAD)"
           echo "::set-env name=BUILD_VERSION::$(echo $BUILD_TAG+b$BUILD_COUNT.$BUILD_HASH)"
-        continue-on-error: true
 
       - name: Update version (Linux / Windows)
         if: matrix.os != 'macos-10.15'
