@@ -13,11 +13,16 @@ Description: A ZTE Optical Modem Configuration Tool
 from argparse import ArgumentParser, FileType, RawTextHelpFormatter
 from construct import *
 import os
+import zlib
 
 VERSION = 'v0.1.0'
 DESCRIPTION = 'A ZTE Optical Modem Configuration Tool'
 DOCUMENTS = '''
+(i) Project page: https://github.com/TommyLau/ztecfg
+(?) Bug report: https://github.com/TommyLau/ztecfg/issues
+
 Copyright (C) 2020 Tommy Lau <http://tommy.net.cn/>
+ 
 '''
 
 file_header = Struct(
@@ -68,7 +73,69 @@ def get_new_filename(original, extension):
 
 
 def unpack(cfg_file, xml_filename):
-    pass
+    # Get cfg file content
+    file_content = cfg_file.read()
+    cfg_file.close()
+
+    # Parse cfg file header
+    cfg = cfg_header.parse(file_content)
+    print(f"\nDevice name: {cfg.device_name.decode('utf-8')}\n")
+
+    # The offset of blocks
+    offset = file_header.sizeof() + device_header.sizeof() + cfg.device_header.name_length
+
+    # Get blocks
+    blocks = file_content[offset:]
+
+    # Parse block header
+    header = block_header.parse(blocks)
+
+    # New offset for block content
+    offset = block_header.sizeof()
+
+    xml = b''
+    compressed_data = b''
+    i = 1
+
+    while True:
+        # Parse each block
+        b = block.parse(blocks[offset:])
+
+        # Display process information
+        print(f'Block {i}: size={b.size}, compressed={b.compressed_size}, offset={b.offset}')
+        i += 1
+
+        # Point to next block
+        offset = b.offset
+
+        # Append to XML output
+        xml += zlib.decompress(b.content)
+
+        # Compressed data for crc32 checksum
+        compressed_data += b.content
+
+        # No more blocks
+        if offset == 0:
+            break
+
+    # Checksum for compressed data
+    crc = zlib.crc32(compressed_data)
+    if header.compressed_crc32 != crc:
+        print('Checksum fail for compressed data, please make sure cfg file is valid.')
+        return
+
+    # Checksum for block header
+    crc = zlib.crc32(block_header.build(header)[:24])
+    if header.header_crc32 != crc:
+        print('Checksum fail for block header, please make sure cfg file is valid.')
+        return
+
+    # Write XML content to file
+    print(f'\nWrite XML output to file "{xml_filename}"\n')
+    with open(xml_filename, 'wb') as f:
+        f.write(xml)
+
+    return
 
 
 def main():
@@ -106,7 +173,6 @@ def main():
         return
 
     if args.unpack:
-        print('unpack')
         unpack(args.unpack[0], filename)
         return
 
