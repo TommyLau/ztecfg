@@ -26,16 +26,13 @@ jobs:
       - name: Setup version variables
         shell: bash
         run: |
-          set -x
           BUILD_TAG=`git describe --tags || echo v0.1.0`
           BUILD_DATE=`date +"%Y%m%d"`
-          BUILD_COUNT=`git rev-list --count HEAD`
           BUILD_HASH=`git rev-parse --short HEAD`
           echo "::set-env name=BUILD_TAG::$BUILD_TAG"
           echo "::set-env name=BUILD_DATE::$BUILD_DATE"
-          echo "::set-env name=BUILD_COUNT::$BUILD_COUNT"
           echo "::set-env name=BUILD_HASH::$BUILD_HASH"
-          echo "::set-env name=BUILD_VERSION::$BUILD_TAG+b$BUILD_COUNT.$BUILD_HASH"
+          echo "::set-env name=BUILD_VERSION::$BUILD_TAG+$BUILD_DATE.$BUILD_HASH"
 
       - name: Update version (Linux / Windows)
         if: matrix.os != 'macos-10.15'
