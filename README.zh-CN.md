@@ -1,18 +1,18 @@
 <div align="right">
-  Language:
-  🇺🇸
-  <a title="Chinese" href="README.zh-CN.md">🇨🇳</a>
+  语言：
+  <a title="英语" href="README.md">🇺🇸</a>
+  🇨🇳
 </div>
 
 # ztecfg
 
-> A ZTE Optical Modem Configuration Tool
+> 中兴光猫配置文件修改工具
 
 [![GitHub Actions](https://github.com/TommyLau/ztecfg/workflows/Release/badge.svg)](https://github.com/TommyLau/ztecfg/actions?query=workflow%3A%22Release%22)
 [![GitHub Actions](https://github.com/TommyLau/ztecfg/workflows/Development/badge.svg)](https://github.com/TommyLau/ztecfg/actions?query=workflow%3A%22Development%22)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-## Usage
+## 使用说明
 
 ```bash
 usage: ztecfg [-h] [-u cfg_file | -p cfg_file xml_file] [-o file] [-f] [-v]
@@ -29,53 +29,50 @@ optional arguments:
   -v, --version         show program's version number and exit
 ```
 
-### Unpack
+### 解包
 
-Unpack a ZTE cfg file:
+解包一个 cfg 文件：
 
 ```bash
 $ ./ztecfg -u ctce8_F663N.cfg
 Write XML output to file "ctce8_F663N.xml"
 ```
 
-Unpack a ZTE cfg file to specific file `out.xml`:
+解包一个 cfg 文件，并指定输出文件为 `out.xml`：
 
 ```bash
 $ ./ztecfg -u ctce8_F663N.cfg -o out.xml
 Write XML output to file "out.xml"
 ```
 
-### Pack
+### 打包
 
-Pack to ZTE cfg file with original cfg file and xml file:
+使用原始的 cfg 文件和 xml 文件打包中兴 cfg 文件：
 
 ```bash
 $ ./ztecfg -p ctce8_F663N.cfg new.xml
 Write CFG output to file "new.xml.cfg"
 ```
 
-Pack ZTE cfg with a specific output file named `out.cfg`:
+打包中兴 cfg 文件，并指定输出文件为 `out.cfg`：
 
 ```bash
 $ ./ztecfg -p ctce8_F663N.cfg new.xml -o out.cfg
 Write CFG output to file "out.cfg"
 ```
 
-## Warning
+## 警告
 
-The unpack process will check the CRC checksum of both the file header and the block header to make sure the cfg file
-is valid. Also the pack process will write back the checksum to the cfg file.
+在解包的过程中，程序会检查文件头和文件块的 CRC 校验，以判断 cfg 文件是否有效。同样在打包 cfg 文件的过程中，本程序也会写入相应的校验值。
 
-If the cfg file cannot be unpacked, it might indicate that the cfg file is incompatible with this tool. Under such
-circumstances, please **DO NOT** try to pack it back, cause it might brick your optical modem.
+如果无法正常解包 cfg 文件，很有可能本工具无法处理该 cfg 文件。在这种情况下，请**不要**尝试重新打包，否则可能导致你的光猫变砖。
 
-Always backup your configurations before you do any modifications to your modem.
+在对光猫进行任何操作和修改前，请务必进行备份。
 
-This tools had been tested only on `ZTE ZXHN F663N`, but it should be working on any `ZTE ZXHN` series optical modems
-with a cfg backup file.
+本工具仅在`中兴 ZXHN F663N` 上测试通过，理论上可以支持所有`中兴 ZXHN` 系列的光猫 cfg 配置文件。
 
-Use at your own risk, the author will not take any responsibilities of the damage to your devices.
+请您自行承担使用风险，作者对于您设备可能造成的损坏不承担任何责任。
 
-## Special Thanks
+## 特别感谢
 
 - [中兴光猫系列配置解密工具](https://github.com/wx1183618058/ZET-Optical-Network-Terminal-Decoder)

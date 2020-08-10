@@ -1,4 +1,4 @@
-name: Release ztecfg
+name: Release
 
 on:
   push:

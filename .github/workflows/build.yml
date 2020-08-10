@@ -1,10 +1,12 @@
-name: Compile ztecfg
+name: Development
 
 on:
   workflow_dispatch:
   push:
     branches:
       - master
+    paths:
+      - '*.py'
 
 env:
   PYTHON_VERSION: '3.8'
